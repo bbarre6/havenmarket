@@ -17,8 +17,8 @@ export default async function Header() {
     <header className="sticky top-0 z-40 border-b border-border bg-surface">
       <div className="container-page flex h-16 items-center gap-4">
         <Link href="/" className="shrink-0 text-xl font-extrabold tracking-tight">
-          <span className="text-brand">Haven</span>
-          <span className="text-foreground">Market</span>
+          <span className="text-brand">Buy</span>
+          <span className="text-foreground"> Stuff</span>
         </Link>
 
         <div className="hidden flex-1 md:flex">

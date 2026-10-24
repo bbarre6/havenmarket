@@ -23,9 +23,11 @@ const initialState: CheckoutFormState = {};
 export default function CheckoutForm({
   addresses,
   totals,
+  stripeEnabled,
 }: {
   addresses: AddressOption[];
   totals: { subtotal: number; shippingTotal: number; taxTotal: number; total: number };
+  stripeEnabled: boolean;
 }) {
   const [state, formAction, pending] = useActionState(placeOrderAction, initialState);
   const [selected, setSelected] = useState(addresses.find((a) => a.isDefault)?.id ?? addresses[0]?.id ?? "");
@@ -91,8 +93,18 @@ export default function CheckoutForm({
             <CreditCard size={16} /> Payment
           </h2>
           <p className="text-sm text-muted">
-            This demo runs in <strong>simulated payment mode</strong> — no real card is charged. In production this
-            would be replaced with a Stripe test-mode payment element.
+            {stripeEnabled ? (
+              <>
+                You&apos;ll be redirected to Stripe to pay by card. This store is running in{" "}
+                <strong>Stripe test mode</strong> — use card number 4242 4242 4242 4242, any future expiry, and any
+                CVC. No real money moves.
+              </>
+            ) : (
+              <>
+                This demo runs in <strong>simulated payment mode</strong> — no real card is charged. Set
+                STRIPE_SECRET_KEY to enable real Stripe test-mode checkout.
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -108,7 +120,13 @@ export default function CheckoutForm({
         </div>
         {state.error && <p className="mt-3 text-sm text-danger">{state.error}</p>}
         <button type="submit" disabled={pending || !selected} className="btn btn-primary mt-4 w-full">
-          {pending ? "Placing order..." : `Place order — ${formatMoney(totals.total)}`}
+          {pending
+            ? stripeEnabled
+              ? "Redirecting to payment..."
+              : "Placing order..."
+            : stripeEnabled
+              ? `Continue to payment — ${formatMoney(totals.total)}`
+              : `Place order — ${formatMoney(totals.total)}`}
         </button>
       </div>
     </form>

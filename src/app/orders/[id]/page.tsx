@@ -5,17 +5,22 @@ import { CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { formatMoney } from "@/lib/money";
+import { finalizeStripeOrder } from "@/lib/fulfillment";
 
 export default async function OrderDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ success?: string }>;
+  searchParams: Promise<{ success?: string; session_id?: string }>;
 }) {
   const { id } = await params;
-  const { success } = await searchParams;
+  const { success, session_id } = await searchParams;
   const user = await requireUser();
+
+  if (session_id) {
+    await finalizeStripeOrder(id);
+  }
 
   const order = await prisma.order.findFirst({
     where: { id, buyerId: user.id },
@@ -27,9 +32,17 @@ export default async function OrderDetailPage({
 
   if (!order) notFound();
 
+  const paymentSucceeded = success === "1" || (Boolean(session_id) && order.status !== "PENDING_PAYMENT" && order.status !== "CANCELLED");
+  const paymentFailed = Boolean(session_id) && order.status === "CANCELLED";
+
   return (
     <div className="container-page flex flex-col gap-6 py-8">
-      {success === "1" && (
+      {paymentFailed && (
+        <div className="card flex items-center gap-2 bg-red-50 p-4 text-sm font-medium text-danger">
+          Your payment could not be completed. If you were charged, contact support — otherwise no charge was made.
+        </div>
+      )}
+      {paymentSucceeded && (
         <div className="card flex items-center gap-2 bg-green-50 p-4 text-sm font-medium text-success">
           <CheckCircle2 size={18} /> Order placed successfully! A confirmation has been added to your order history.
         </div>

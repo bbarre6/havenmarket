@@ -1,4 +1,4 @@
-# HavenMarket
+# Buy Stuff
 
 A full-stack online marketplace (eBay-style) built with Next.js. Buy fixed-price items, bid in live auctions, run a seller storefront, message other users, and leave reviews — all backed by a real database with server-validated business logic.
 

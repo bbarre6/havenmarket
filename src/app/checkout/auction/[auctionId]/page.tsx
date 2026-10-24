@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { computeTotals } from "@/lib/pricing";
+import { isStripeConfigured } from "@/lib/stripe";
 import WonAuctionCheckoutForm from "@/components/WonAuctionCheckoutForm";
 import { formatMoney } from "@/lib/money";
 
@@ -47,7 +48,12 @@ export default async function WonAuctionCheckoutPage({ params }: { params: Promi
           <span>{formatMoney(totals.total)}</span>
         </div>
       </div>
-      <WonAuctionCheckoutForm auctionId={auction.id} addresses={addresses} total={totals.total} />
+      <WonAuctionCheckoutForm
+        auctionId={auction.id}
+        addresses={addresses}
+        total={totals.total}
+        stripeEnabled={isStripeConfigured()}
+      />
     </div>
   );
 }

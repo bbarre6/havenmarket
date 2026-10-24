@@ -24,10 +24,12 @@ export default function WonAuctionCheckoutForm({
   auctionId,
   addresses,
   total,
+  stripeEnabled,
 }: {
   auctionId: string;
   addresses: AddressOption[];
   total: number;
+  stripeEnabled: boolean;
 }) {
   const action = payForWonAuctionAction.bind(null, auctionId);
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -83,7 +85,13 @@ export default function WonAuctionCheckoutForm({
 
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
       <button type="submit" disabled={pending || !selected} className="btn btn-primary self-start">
-        {pending ? "Processing..." : `Pay now — ${formatMoney(total)}`}
+        {pending
+          ? stripeEnabled
+            ? "Redirecting to payment..."
+            : "Processing..."
+          : stripeEnabled
+            ? `Continue to payment — ${formatMoney(total)}`
+            : `Pay now — ${formatMoney(total)}`}
       </button>
     </form>
   );

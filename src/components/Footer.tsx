@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="container-page grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-2">
           <div className="text-xl font-extrabold">
-            <span className="text-brand">Haven</span>Market
+            <span className="text-brand">Buy</span> Stuff
           </div>
           <p className="mt-3 max-w-xs text-sm text-muted">
             A demo online marketplace for buying, selling, and bidding on just about anything. Built as a fully

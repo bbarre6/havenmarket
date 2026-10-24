@@ -17,7 +17,7 @@ export default async function DashboardOverviewPage() {
         <StatCard label="Net payout" value={formatMoney(stats.totalRevenue)} />
       </div>
       <div className="card p-5 text-sm text-muted">
-        Manage your listings, review buyer questions, and track orders from the menu on the left. HavenMarket takes a
+        Manage your listings, review buyer questions, and track orders from the menu on the left. Buy Stuff takes a
         10% seller fee ({formatMoney(stats.platformFee)} so far); net payout reflects simulated payments collected
         through this demo&apos;s checkout flow after that fee.
       </div>

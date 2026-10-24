@@ -6,6 +6,63 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { computeTotals } from "@/lib/pricing";
 import { checkoutSchema } from "@/lib/validation";
+import { getStripe, getSiteUrl, isStripeConfigured } from "@/lib/stripe";
+import type Stripe from "stripe";
+
+type Totals = { subtotal: number; shippingTotal: number; taxTotal: number; total: number };
+
+function buildStripeLineItems(
+  cartLines: { name: string; price: number; quantity: number }[],
+  totals: Totals
+): Stripe.Checkout.SessionCreateParams.LineItem[] {
+  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = cartLines.map((line) => ({
+    price_data: {
+      currency: "usd",
+      product_data: { name: line.name },
+      unit_amount: Math.round(line.price * 100),
+    },
+    quantity: line.quantity,
+  }));
+
+  if (totals.shippingTotal > 0) {
+    lineItems.push({
+      price_data: { currency: "usd", product_data: { name: "Shipping" }, unit_amount: Math.round(totals.shippingTotal * 100) },
+      quantity: 1,
+    });
+  }
+  if (totals.taxTotal > 0) {
+    lineItems.push({
+      price_data: { currency: "usd", product_data: { name: "Estimated tax" }, unit_amount: Math.round(totals.taxTotal * 100) },
+      quantity: 1,
+    });
+  }
+
+  return lineItems;
+}
+
+async function startStripeCheckout(
+  orderId: string,
+  userEmail: string | null | undefined,
+  lineItems: Stripe.Checkout.SessionCreateParams.LineItem[],
+  cancelPath: string
+) {
+  const stripe = getStripe();
+  const siteUrl = getSiteUrl();
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    line_items: lineItems,
+    customer_email: userEmail ?? undefined,
+    metadata: { orderId },
+    success_url: `${siteUrl}/orders/${orderId}?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${siteUrl}${cancelPath}`,
+  });
+
+  await prisma.payment.update({ where: { orderId }, data: { stripeSessionId: session.id } });
+
+  if (!session.url) throw new Error("Stripe did not return a checkout URL.");
+  redirect(session.url);
+}
 
 const NEXT_STATUS: Record<string, "SHIPPED" | "DELIVERED" | undefined> = {
   PAID: "SHIPPED",
@@ -80,6 +137,40 @@ export async function placeOrderAction(
       freeShipping: i.listing.freeShipping,
     }))
   );
+
+  if (isStripeConfigured()) {
+    const pendingOrder = await prisma.order.create({
+      data: {
+        buyerId: user.id,
+        addressId: address.id,
+        status: "PENDING_PAYMENT",
+        subtotal: totals.subtotal,
+        shippingTotal: totals.shippingTotal,
+        taxTotal: totals.taxTotal,
+        total: totals.total,
+        items: {
+          create: cartItems.map((i) => ({
+            listingId: i.listingId,
+            sellerId: i.listing.sellerId,
+            titleSnapshot: i.listing.title,
+            price: i.listing.price,
+            quantity: i.quantity,
+            shippingCost: i.listing.freeShipping ? 0 : i.listing.shippingCost,
+          })),
+        },
+        payment: {
+          create: { provider: "STRIPE", amountCents: Math.round(totals.total * 100), status: "PENDING" },
+        },
+      },
+    });
+
+    const lineItems = buildStripeLineItems(
+      cartItems.map((i) => ({ name: i.listing.title, price: i.listing.price, quantity: i.quantity })),
+      totals
+    );
+    await startStripeCheckout(pendingOrder.id, user.email, lineItems, "/checkout?canceled=1");
+    return {};
+  }
 
   let order;
   try {
@@ -179,6 +270,39 @@ export async function payForWonAuctionAction(
       freeShipping: auction.listing.freeShipping,
     },
   ]);
+
+  if (isStripeConfigured()) {
+    const pendingOrder = await prisma.order.create({
+      data: {
+        buyerId: user.id,
+        addressId: address.id,
+        status: "PENDING_PAYMENT",
+        subtotal: totals.subtotal,
+        shippingTotal: totals.shippingTotal,
+        taxTotal: totals.taxTotal,
+        total: totals.total,
+        items: {
+          create: [
+            {
+              listingId: auction.listingId,
+              sellerId: auction.listing.sellerId,
+              titleSnapshot: auction.listing.title,
+              price: auction.currentBid,
+              quantity: 1,
+              shippingCost: auction.listing.freeShipping ? 0 : auction.listing.shippingCost,
+            },
+          ],
+        },
+        payment: {
+          create: { provider: "STRIPE", amountCents: Math.round(totals.total * 100), status: "PENDING" },
+        },
+      },
+    });
+
+    const lineItems = buildStripeLineItems([{ name: auction.listing.title, price: auction.currentBid, quantity: 1 }], totals);
+    await startStripeCheckout(pendingOrder.id, user.email, lineItems, `/checkout/auction/${auctionId}?canceled=1`);
+    return {};
+  }
 
   const order = await prisma.order.create({
     data: {

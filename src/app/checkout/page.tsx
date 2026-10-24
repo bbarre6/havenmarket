@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth-helpers";
 import { computeTotals } from "@/lib/pricing";
+import { isStripeConfigured } from "@/lib/stripe";
 import CheckoutForm from "@/components/CheckoutForm";
 
 export default async function CheckoutPage() {
@@ -46,7 +47,7 @@ export default async function CheckoutPage() {
   return (
     <div className="container-page py-8">
       <h1 className="mb-6 text-xl font-bold text-foreground">Checkout</h1>
-      <CheckoutForm addresses={addresses} totals={totals} />
+      <CheckoutForm addresses={addresses} totals={totals} stripeEnabled={isStripeConfigured()} />
     </div>
   );
 }

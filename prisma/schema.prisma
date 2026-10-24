@@ -48,6 +48,9 @@ enum PaymentStatus {
   SIMULATED_PENDING
   SIMULATED_PAID
   SIMULATED_FAILED
+  PENDING
+  PAID
+  FAILED
 }
 
 enum ReportStatus {
@@ -261,6 +264,7 @@ model Payment {
   provider        String        @default("SIMULATED")
   amountCents     Int
   status          PaymentStatus @default(SIMULATED_PENDING)
+  stripeSessionId String?       @unique
   stripePaymentIntentId String?
   createdAt       DateTime      @default(now())
 

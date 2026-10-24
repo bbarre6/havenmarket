@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HavenMarket — Buy, sell, and bid on anything",
+  title: "Buy Stuff — Buy, sell, and bid on anything",
   description: "A demo online marketplace with listings, auctions, carts, checkout, and seller tools.",
 };
 
