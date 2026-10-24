@@ -101,8 +101,7 @@ export default function CheckoutForm({
               </>
             ) : (
               <>
-                This demo runs in <strong>simulated payment mode</strong> — no real card is charged. Set
-                STRIPE_SECRET_KEY to enable real Stripe test-mode checkout.
+                Checkout is running in <strong>simulated payment mode</strong> — no real card is charged.
               </>
             )}
           </p>

@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
       <div className="card w-full max-w-sm p-6">
         <h1 className="mb-1 text-xl font-bold text-foreground">Reset your password</h1>
         <p className="mb-6 text-sm text-muted">
-          Enter your account email. This demo doesn&apos;t send real emails — your reset link is generated on screen
+          Enter your account email. Email delivery isn&apos;t connected yet — your reset link is generated on screen
           instead.
         </p>
         <form action={formAction} className="flex flex-col gap-4">
@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
         {state.info && <p className="mt-4 text-sm text-muted">{state.info}</p>}
         {state.resetLink && (
           <div className="mt-4 rounded-lg border border-border bg-surface-muted p-3 text-sm">
-            <p className="mb-1 font-medium text-foreground">Demo reset link (would be emailed in production):</p>
+            <p className="mb-1 font-medium text-foreground">Your reset link (will be emailed once email delivery is connected):</p>
             <Link href={state.resetLink} className="break-all text-brand hover:underline">
               {state.resetLink}
             </Link>

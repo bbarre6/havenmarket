@@ -28,13 +28,13 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-brand via-brand to-brand-dark px-6 py-12 text-white sm:px-12 sm:py-16">
         <div className="max-w-xl">
-          <span className="badge bg-white/15 text-white">Marketplace demo</span>
+          <span className="badge bg-white/15 text-white">Now live</span>
           <h1 className="mt-4 text-3xl font-extrabold leading-tight sm:text-4xl">
             Buy it, sell it, bid on it.
           </h1>
           <p className="mt-3 text-base text-white/85">
-            Thousands of deals across electronics, fashion, home, auto, collectibles, and sports — plus live
-            auctions ending every day.
+            Deals across electronics, fashion, home, auto, collectibles, and sports — plus live auctions ending
+            every day.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/search" className="btn bg-white text-brand hover:bg-white/90">

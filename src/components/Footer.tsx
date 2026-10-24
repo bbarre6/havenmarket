@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { CATEGORY_TREE } from "@/lib/categories-data";
+import { isStripeConfigured } from "@/lib/stripe";
 
-export default function Footer() {
+export default async function Footer() {
+  const stripeEnabled = isStripeConfigured();
+
   return (
     <footer className="mt-auto border-t border-border bg-surface">
       <div className="container-page grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-5">
@@ -10,8 +13,7 @@ export default function Footer() {
             <span className="text-brand">Buy</span> Stuff
           </div>
           <p className="mt-3 max-w-xs text-sm text-muted">
-            A demo online marketplace for buying, selling, and bidding on just about anything. Built as a fully
-            working sample application.
+            Buy, sell, and bid on just about anything.
           </p>
         </div>
         <div>
@@ -67,9 +69,11 @@ export default function Footer() {
           </ul>
         </div>
       </div>
-      <div className="border-t border-border py-4 text-center text-xs text-muted">
-        Demo marketplace application — not a real store. Payments are simulated.
-      </div>
+      {!stripeEnabled && (
+        <div className="border-t border-border py-4 text-center text-xs text-muted">
+          Payments are currently running in simulated mode.
+        </div>
+      )}
     </footer>
   );
 }

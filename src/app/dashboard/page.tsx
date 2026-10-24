@@ -1,10 +1,12 @@
 import { requireUser } from "@/lib/auth-helpers";
 import { getSellerStats } from "@/lib/seller";
 import { formatMoney } from "@/lib/money";
+import { isStripeConfigured } from "@/lib/stripe";
 
 export default async function DashboardOverviewPage() {
   const user = await requireUser();
   const stats = await getSellerStats(user.id);
+  const stripeEnabled = isStripeConfigured();
 
   return (
     <div className="flex flex-col gap-6">
@@ -18,8 +20,9 @@ export default async function DashboardOverviewPage() {
       </div>
       <div className="card p-5 text-sm text-muted">
         Manage your listings, review buyer questions, and track orders from the menu on the left. Buy Stuff takes a
-        10% seller fee ({formatMoney(stats.platformFee)} so far); net payout reflects simulated payments collected
-        through this demo&apos;s checkout flow after that fee.
+        10% seller fee ({formatMoney(stats.platformFee)} so far); net payout reflects
+        {stripeEnabled ? " payments collected through checkout" : " simulated payments collected through checkout"}{" "}
+        after that fee.
       </div>
     </div>
   );

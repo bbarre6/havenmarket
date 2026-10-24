@@ -11,10 +11,7 @@ export default async function LoginPage({
   return (
     <div className="container-page flex min-h-[70vh] items-center justify-center py-12">
       <div className="card w-full max-w-sm p-6">
-        <h1 className="mb-1 text-xl font-bold text-foreground">Sign in</h1>
-        <p className="mb-6 text-sm text-muted">
-          Demo login: <span className="font-mono">demo@marketplace.test</span> / <span className="font-mono">Demo12345!</span>
-        </p>
+        <h1 className="mb-6 text-xl font-bold text-foreground">Sign in</h1>
         <LoginForm callbackUrl={callbackUrl ?? "/"} />
         <p className="mt-3 text-center text-sm">
           <Link href="/forgot-password" className="text-brand hover:underline">

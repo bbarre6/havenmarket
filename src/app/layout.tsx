@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Buy Stuff — Buy, sell, and bid on anything",
-  description: "A demo online marketplace with listings, auctions, carts, checkout, and seller tools.",
+  description: "An online marketplace with listings, auctions, carts, checkout, and seller tools.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

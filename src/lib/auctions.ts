@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma";
 /**
  * Auctions close lazily: whenever an expired LIVE auction is read, it is
  * finalized server-side (winner determined from the highest bid, status
- * flipped to ENDED, listing flipped to SOLD/ENDED). A real deployment would
- * replace this with a scheduled job, but the read-time check keeps the demo
- * correct without any background worker.
+ * flipped to ENDED, listing flipped to SOLD/ENDED). This should eventually
+ * move to a scheduled job, but the read-time check keeps auctions correct
+ * without any background worker in the meantime.
  */
 export async function finalizeIfExpired(auctionId: string) {
   const auction = await prisma.auction.findUnique({ where: { id: auctionId } });
