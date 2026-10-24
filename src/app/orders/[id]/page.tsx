@@ -38,12 +38,12 @@ export default async function OrderDetailPage({
   return (
     <div className="container-page flex flex-col gap-6 py-8">
       {paymentFailed && (
-        <div className="card flex items-center gap-2 bg-red-50 p-4 text-sm font-medium text-danger">
+        <div className="card flex items-center gap-2 bg-danger-bg p-4 text-sm font-medium text-danger">
           Your payment could not be completed. If you were charged, contact support — otherwise no charge was made.
         </div>
       )}
       {paymentSucceeded && (
-        <div className="card flex items-center gap-2 bg-green-50 p-4 text-sm font-medium text-success">
+        <div className="card flex items-center gap-2 bg-success-bg p-4 text-sm font-medium text-success">
           <CheckCircle2 size={18} /> Order placed successfully! A confirmation has been added to your order history.
         </div>
       )}

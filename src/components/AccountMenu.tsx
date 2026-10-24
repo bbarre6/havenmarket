@@ -68,7 +68,7 @@ export default function AccountMenu({ user }: Props) {
           <div className="my-1 border-t border-border" />
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-danger hover:bg-red-50"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-danger hover:bg-danger-bg"
           >
             <LogOut size={15} /> Sign out
           </button>

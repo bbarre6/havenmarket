@@ -5,6 +5,7 @@ import { getCartCount, getWatchlistCount } from "@/lib/cart";
 import SearchBar from "@/components/SearchBar";
 import AccountMenu from "@/components/AccountMenu";
 import CategoryNav from "@/components/CategoryNav";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default async function Header() {
   const user = await getSessionUser();
@@ -62,6 +63,7 @@ export default async function Header() {
               </span>
             )}
           </Link>
+          <ThemeToggle />
           <AccountMenu user={user} />
         </nav>
       </div>
