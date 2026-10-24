@@ -48,3 +48,6 @@ next-env.d.ts
 *.db-journal
 /public/uploads
 /test.db*
+
+# local ops scripts (not part of the app)
+/scripts/

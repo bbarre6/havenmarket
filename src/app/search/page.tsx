@@ -1,8 +1,10 @@
-import { Frown } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Frown } from "lucide-react";
 import { searchListings, type SearchParamsInput } from "@/lib/listings";
 import { finalizeExpiredAuctions, promoteUpcomingAuctions } from "@/lib/auctions";
 import { getSessionUser } from "@/lib/auth-helpers";
 import { getWatchingSet } from "@/lib/cart";
+import { CATEGORY_TREE } from "@/lib/categories-data";
 import SearchBar from "@/components/SearchBar";
 import SortSelect from "@/components/SortSelect";
 import FiltersSidebar from "@/components/FiltersSidebar";
@@ -42,12 +44,35 @@ export default async function SearchPage({
 
   const watchingIds = await getWatchingSet(user?.id, items.map((i) => i.id));
 
+  const activeCategory = normalized.category
+    ? CATEGORY_TREE.find((c) => c.slug === normalized.category)
+    : undefined;
+  const activeSub =
+    activeCategory && normalized.sub ? activeCategory.children.find((s) => s.slug === normalized.sub) : undefined;
+
+  function backHref(dropKeys: string[]) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(rawParams)) {
+      if (dropKeys.includes(key) || key === "page") continue;
+      if (Array.isArray(value)) value.forEach((v) => params.append(key, v));
+      else if (typeof value === "string") params.set(key, value);
+    }
+    const qs = params.toString();
+    return qs ? `/search?${qs}` : "/search";
+  }
+
+  const back = activeSub
+    ? { href: backHref(["sub"]), label: `Back to ${activeCategory!.name}` }
+    : activeCategory
+      ? { href: backHref(["category", "sub"]), label: "Back to all listings" }
+      : null;
+
   const heading = normalized.q
     ? `Results for "${normalized.q}"`
-    : normalized.sub
-      ? "Browse"
-      : normalized.category
-        ? "Browse"
+    : activeSub
+      ? activeSub.name
+      : activeCategory
+        ? activeCategory.name
         : "All listings";
 
   return (
@@ -58,6 +83,14 @@ export default async function SearchPage({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
+          {back && (
+            <Link
+              href={back.href}
+              className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-muted hover:text-brand"
+            >
+              <ArrowLeft size={14} /> {back.label}
+            </Link>
+          )}
           <h1 className="text-xl font-bold text-foreground">{heading}</h1>
           <p className="text-sm text-muted">{total} result{total === 1 ? "" : "s"}</p>
         </div>
