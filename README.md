@@ -6,16 +6,17 @@ A full-stack online marketplace (eBay-style) built with Next.js. Buy fixed-price
 
 - **Frontend:** React 19 + Next.js 16 (App Router), TypeScript, Tailwind CSS v4
 - **Backend:** Next.js Server Actions + Route Handlers (same codebase, no separate API server)
-- **Database:** SQLite via Prisma ORM 7 (file-based, zero external services required). Swappable to PostgreSQL/MySQL by changing the `datasource` provider and `DATABASE_URL`.
+- **Database:** PostgreSQL via Prisma ORM 7 (Prisma Postgres, provisioned through the Vercel Marketplace), using the `@prisma/adapter-pg` driver adapter
 - **Auth:** Auth.js (NextAuth v5), credentials provider, JWT sessions, bcrypt password hashing
 - **Icons:** lucide-react
-- **Tests:** Vitest, against a throwaway SQLite database
+- **Payments:** Stripe Checkout (test mode) when `STRIPE_SECRET_KEY` is set; falls back to a simulated instant-pay flow otherwise
+- **Tests:** Vitest, against a throwaway Postgres schema on the same database (created and dropped per run)
 
 ## Getting started
 
 ```bash
 npm install
-npm run db:migrate   # creates dev.db and applies the schema
+npm run db:migrate   # applies the schema to DATABASE_URL
 npm run db:seed       # loads demo categories, listings, auctions, users
 npm run dev
 ```
@@ -36,14 +37,14 @@ npm run lint          # ESLint
 
 ### Environment variables
 
-See `.env.example`. For local development the defaults work out of the box:
+See `.env.example`.
 
 | Variable | Purpose |
 | --- | --- |
-| `DATABASE_URL` | SQLite file path (`file:./dev.db`) |
-| `AUTH_SECRET` | Signs session JWTs. A dev value is pre-filled; generate your own with `openssl rand -base64 32` for anything beyond local testing. |
+| `DATABASE_URL` | Postgres connection string. Set automatically by `vercel env pull` when the Prisma Postgres Marketplace integration is connected; point it at any Postgres instance for standalone dev. |
+| `AUTH_SECRET` | Signs session JWTs. Generate your own with `openssl rand -base64 32`. |
 | `NEXTAUTH_URL` | Base URL used by Auth.js |
-| `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` | Optional. Leave blank — checkout runs in simulated-payment mode without them (see below). |
+| `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` / `STRIPE_WEBHOOK_SECRET` | Optional. Leave blank — checkout runs in simulated-payment mode without them (see below). |
 
 ## Implemented features
 
@@ -87,13 +88,12 @@ See `.env.example`. For local development the defaults work out of the box:
 
 ## Remaining integrations for a production deployment
 
-1. **Real payments** — Stripe test-mode (or live) integration in place of the simulated payment step.
-2. **Object storage for images** instead of local disk.
-3. **A scheduled job for auction closing** (e.g. a cron hitting a small "sweep expired auctions" endpoint, or a queue) instead of closing auctions lazily when a page happens to read them. The lazy-close logic already lives in `src/lib/auctions.ts` (`finalizeExpiredAuctions`) and is safe to call from a cron trigger as-is.
-4. **Transactional email** for password resets, order confirmations, and shipping updates.
-5. **A real Postgres/MySQL database** for multi-instance deployments — SQLite is great for a single-process demo but doesn't support concurrent writers across multiple server instances. Swapping providers in `prisma/schema.prisma` and the adapter in `src/lib/prisma.ts` is the only change needed; the rest of the app is provider-agnostic Prisma code.
-6. **Rate limiting** on login, messaging, and bidding endpoints (e.g. via Upstash/Redis) — not implemented here since it typically depends on the hosting platform's infrastructure.
-7. **An admin/moderation view** over the `Report` table — reports are captured and stored today (visible via `npm run db:studio`), but there's no dedicated moderation UI yet.
+1. **Object storage for images** instead of local disk — Vercel's filesystem is ephemeral per-deployment, so uploaded listing photos won't persist; this should move to S3, R2, or Vercel Blob.
+2. **A scheduled job for auction closing** (e.g. a cron hitting a small "sweep expired auctions" endpoint, or a queue) instead of closing auctions lazily when a page happens to read them. The lazy-close logic already lives in `src/lib/auctions.ts` (`finalizeExpiredAuctions`) and is safe to call from a cron trigger as-is.
+3. **Transactional email** for password resets, order confirmations, and shipping updates.
+4. **Rate limiting** on login, messaging, and bidding endpoints (e.g. via Upstash/Redis) — not implemented here since it typically depends on the hosting platform's infrastructure.
+5. **An admin/moderation view** over the `Report` table — reports are captured and stored today (visible via `npm run db:studio`), but there's no dedicated moderation UI yet.
+6. **Live payments** — Stripe is wired up in test mode; switching to live keys (and adding a webhook endpoint in the Stripe dashboard pointing at `/api/webhooks/stripe`) is what's left for real charges.
 
 ## Data model
 

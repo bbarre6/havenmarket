@@ -2,11 +2,11 @@ import "dotenv/config";
 import { faker } from "@faker-js/faker";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { CATEGORY_TREE } from "../src/lib/categories-data";
 import { slugify } from "../src/lib/slug";
 
-const adapter = new PrismaLibSql({ url: process.env.DATABASE_URL ?? "file:./dev.db" });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 const DEMO_PASSWORD = "Demo12345!";
