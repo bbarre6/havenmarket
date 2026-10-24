@@ -43,6 +43,7 @@ export default async function AdminStatsPage() {
           <StatCard label="Total orders" value={stats.totalOrders} />
           <StatCard label="Completed orders" value={stats.completedOrderCount} />
           <StatCard label="Gross merchandise value" value={formatMoney(stats.gmv)} />
+          <StatCard label="Money made (10% fee)" value={formatMoney(stats.platformRevenue)} />
         </div>
       </section>
 

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { computeSellerPayout } from "@/lib/pricing";
 
 const COMPLETED_ORDER_STATUSES = ["PAID", "SHIPPED", "DELIVERED"] as const;
 
@@ -12,6 +13,7 @@ export async function getSiteStats() {
     listingsByStatus,
     totalOrders,
     completedOrders,
+    completedOrderItems,
     totalAuctions,
     liveAuctions,
     totalBids,
@@ -26,6 +28,10 @@ export async function getSiteStats() {
     prisma.order.findMany({
       where: { status: { in: [...COMPLETED_ORDER_STATUSES] } },
       select: { total: true },
+    }),
+    prisma.orderItem.findMany({
+      where: { order: { status: { in: [...COMPLETED_ORDER_STATUSES] } } },
+      select: { price: true, quantity: true },
     }),
     prisma.auction.count(),
     prisma.auction.count({ where: { status: "LIVE" } }),
@@ -49,6 +55,12 @@ export async function getSiteStats() {
 
   const gmv = completedOrders.reduce((sum, o) => sum + o.total, 0);
 
+  // Platform revenue (the 10% seller fee), same basis as the per-seller
+  // payout math in src/lib/pricing.ts — applied to item subtotal, not the
+  // shipping/tax portion of the order total.
+  const itemsGross = completedOrderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const platformRevenue = computeSellerPayout(itemsGross).fee;
+
   return {
     totalUsers,
     totalSellers,
@@ -58,6 +70,7 @@ export async function getSiteStats() {
     totalOrders,
     completedOrderCount: completedOrders.length,
     gmv,
+    platformRevenue,
     totalAuctions,
     liveAuctions,
     totalBids,
