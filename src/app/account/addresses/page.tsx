@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth-helpers";
+import { requireUserForPage } from "@/lib/auth-helpers";
 import AddressForm from "@/components/AddressForm";
 import DeleteAddressButton from "@/components/DeleteAddressButton";
 
 export default async function AddressesPage() {
-  const user = await requireUser();
+  const user = await requireUserForPage("/account/addresses");
   const addresses = await prisma.address.findMany({ where: { userId: user.id }, orderBy: { isDefault: "desc" } });
 
   return (

@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { requireFullUser } from "@/lib/auth-helpers";
+import { requireFullUserForPage } from "@/lib/auth-helpers";
 import ProfileForm from "@/components/ProfileForm";
 import PasswordForm from "@/components/PasswordForm";
 
 export default async function AccountPage() {
-  const user = await requireFullUser();
+  const user = await requireFullUserForPage("/account");
 
   return (
     <div className="container-page flex max-w-2xl flex-col gap-6 py-8">

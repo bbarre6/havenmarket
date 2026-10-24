@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth-helpers";
+import { requireUserForPage } from "@/lib/auth-helpers";
 import { computeTotals } from "@/lib/pricing";
 import { isStripeConfigured } from "@/lib/stripe";
 import WonAuctionCheckoutForm from "@/components/WonAuctionCheckoutForm";
@@ -8,7 +8,7 @@ import { formatMoney } from "@/lib/money";
 
 export default async function WonAuctionCheckoutPage({ params }: { params: Promise<{ auctionId: string }> }) {
   const { auctionId } = await params;
-  const user = await requireUser();
+  const user = await requireUserForPage(`/checkout/auction/${auctionId}`);
 
   const auction = await prisma.auction.findUnique({ where: { id: auctionId }, include: { listing: true } });
   if (!auction || auction.winnerId !== user.id) notFound();

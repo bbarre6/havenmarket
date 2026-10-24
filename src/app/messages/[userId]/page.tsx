@@ -2,13 +2,13 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth-helpers";
+import { requireUserForPage } from "@/lib/auth-helpers";
 import { getThread } from "@/lib/messages";
 import MessageThread from "@/components/MessageThread";
 
 export default async function MessageThreadPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId: partnerId } = await params;
-  const user = await requireUser();
+  const user = await requireUserForPage(`/messages/${partnerId}`);
 
   const partner = await prisma.user.findUnique({ where: { id: partnerId }, select: { id: true, name: true } });
   if (!partner) notFound();

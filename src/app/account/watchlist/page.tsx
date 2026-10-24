@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth-helpers";
+import { requireUserForPage } from "@/lib/auth-helpers";
 import { listingCardSelect } from "@/lib/types";
 import ProductGrid from "@/components/ProductGrid";
 
 export default async function WatchlistPage() {
-  const user = await requireUser();
+  const user = await requireUserForPage("/account/watchlist");
 
   const watchlist = await prisma.watchlist.findMany({
     where: { userId: user.id },

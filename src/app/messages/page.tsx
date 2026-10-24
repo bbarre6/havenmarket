@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { requireUser } from "@/lib/auth-helpers";
+import { requireUserForPage } from "@/lib/auth-helpers";
 import { getConversations } from "@/lib/messages";
 
 export default async function MessagesPage() {
-  const user = await requireUser();
+  const user = await requireUserForPage("/messages");
   const conversations = await getConversations(user.id);
 
   return (

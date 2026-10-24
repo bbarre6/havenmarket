@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -28,5 +29,22 @@ export async function requireAdmin() {
   if (!user.isAdmin) {
     throw new Error("FORBIDDEN");
   }
+  return user;
+}
+
+// For Server Components (pages), where throwing produces a raw crash page
+// instead of sending a logged-out visitor to /login. Server Actions should
+// keep using requireUser()/requireFullUser() — throwing there is correct,
+// it surfaces as a form error instead of a redirect mid-mutation.
+export async function requireUserForPage(callbackUrl: string) {
+  const user = await getSessionUser();
+  if (!user) redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+  return user;
+}
+
+export async function requireFullUserForPage(callbackUrl: string) {
+  const sessionUser = await requireUserForPage(callbackUrl);
+  const user = await prisma.user.findUnique({ where: { id: sessionUser.id } });
+  if (!user) redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   return user;
 }

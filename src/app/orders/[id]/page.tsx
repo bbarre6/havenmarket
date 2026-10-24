@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth-helpers";
+import { requireUserForPage } from "@/lib/auth-helpers";
 import { formatMoney } from "@/lib/money";
 import { finalizeStripeOrder } from "@/lib/fulfillment";
 
@@ -16,7 +16,7 @@ export default async function OrderDetailPage({
 }) {
   const { id } = await params;
   const { success, session_id } = await searchParams;
-  const user = await requireUser();
+  const user = await requireUserForPage(`/orders/${id}`);
 
   if (session_id) {
     await finalizeStripeOrder(id);
