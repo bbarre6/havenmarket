@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin, Store, Truck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -20,6 +21,32 @@ import ReportListingButton from "@/components/ReportListingButton";
 import StarRating from "@/components/StarRating";
 import ProductGrid from "@/components/ProductGrid";
 import TrackRecentlyViewed from "@/components/TrackRecentlyViewed";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const listing = await getListingBySlug(slug);
+  if (!listing) return {};
+
+  const description = `${formatMoney(listing.price)} · ${conditionLabel(listing.condition)} · ${listing.description.slice(0, 140)}`;
+  const image = listing.images[0]?.url;
+
+  return {
+    title: listing.title,
+    description,
+    openGraph: {
+      title: listing.title,
+      description,
+      type: "website",
+      images: image ? [{ url: image }] : undefined,
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title: listing.title,
+      description,
+      images: image ? [image] : undefined,
+    },
+  };
+}
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

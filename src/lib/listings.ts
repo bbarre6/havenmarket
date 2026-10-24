@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { listingCardSelect } from "@/lib/types";
 import type { Prisma } from "@/generated/prisma/client";
@@ -179,7 +180,7 @@ export async function getRelatedListings(categoryId: string, excludeId: string) 
   });
 }
 
-export async function getListingBySlug(slug: string) {
+export const getListingBySlug = cache(async function getListingBySlug(slug: string) {
   return prisma.listing.findUnique({
     where: { slug },
     include: {
@@ -191,4 +192,4 @@ export async function getListingBySlug(slug: string) {
       reviews: { orderBy: { createdAt: "desc" }, include: { reviewer: { select: { id: true, name: true } } } },
     },
   });
-}
+});
