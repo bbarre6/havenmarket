@@ -1,9 +1,11 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validation";
 import { signIn } from "@/auth";
+import { checkSignupRateLimit } from "@/lib/rate-limit";
 
 export type RegisterFormState = { error?: string };
 
@@ -11,6 +13,12 @@ export async function registerAction(
   _prevState: RegisterFormState,
   formData: FormData
 ): Promise<RegisterFormState> {
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const limited = await checkSignupRateLimit(ip);
+  if (limited) {
+    return { error: limited };
+  }
+
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),

@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { ChevronDown, LogOut, Package, Settings, Store, Heart, MessageCircle } from "lucide-react";
+import { ChevronDown, LogOut, Package, Settings, Store, Heart, MessageCircle, ShieldAlert } from "lucide-react";
 
 type Props = {
-  user: { name?: string | null; email?: string | null; isSeller: boolean } | null;
+  user: { name?: string | null; email?: string | null; isSeller: boolean; isAdmin?: boolean } | null;
 };
 
 export default function AccountMenu({ user }: Props) {
@@ -65,6 +65,11 @@ export default function AccountMenu({ user }: Props) {
           <Link href="/dashboard" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-muted" onClick={() => setOpen(false)}>
             <Store size={15} /> Seller dashboard
           </Link>
+          {user.isAdmin && (
+            <Link href="/admin/reports" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-muted" onClick={() => setOpen(false)}>
+              <ShieldAlert size={15} /> Admin
+            </Link>
+          )}
           <div className="my-1 border-t border-border" />
           <button
             onClick={() => signOut({ callbackUrl: "/" })}

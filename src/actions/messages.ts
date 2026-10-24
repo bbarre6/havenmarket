@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { messageSchema } from "@/lib/validation";
+import { checkMessageRateLimit } from "@/lib/rate-limit";
 
 export type SimpleFormState = { error?: string; success?: boolean };
 
@@ -12,6 +13,12 @@ export async function sendMessageAction(
   formData: FormData
 ): Promise<SimpleFormState> {
   const user = await requireUser();
+
+  const limited = await checkMessageRateLimit(user.id);
+  if (limited) {
+    return { error: limited };
+  }
+
   const parsed = messageSchema.safeParse({
     receiverId: formData.get("receiverId"),
     listingId: formData.get("listingId") || undefined,

@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { checkLoginRateLimit } from "@/lib/rate-limit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -21,6 +22,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = String(credentials?.password ?? "");
         if (!email || !password) return null;
 
+        const limited = await checkLoginRateLimit(email);
+        if (limited) return null;
+
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) return null;
 
@@ -33,6 +37,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           image: user.image,
           isSeller: user.isSeller,
+          isAdmin: user.isAdmin,
         };
       },
     }),
@@ -42,6 +47,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id as string;
         token.isSeller = (user as { isSeller?: boolean }).isSeller ?? false;
+        token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
       }
       return token;
     },
@@ -49,6 +55,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.isSeller = Boolean(token.isSeller);
+        session.user.isAdmin = Boolean(token.isAdmin);
       }
       return session;
     },

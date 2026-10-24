@@ -22,3 +22,11 @@ export async function requireFullUser() {
   }
   return user;
 }
+
+export async function requireAdmin() {
+  const user = await requireUser();
+  if (!user.isAdmin) {
+    throw new Error("FORBIDDEN");
+  }
+  return user;
+}

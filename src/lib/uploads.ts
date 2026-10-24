@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -10,7 +9,6 @@ const ALLOWED_TYPES: Record<string, string> = {
 };
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "listings");
 
 export class UploadError extends Error {}
 
@@ -23,13 +21,13 @@ export async function saveUploadedImage(file: File): Promise<string> {
     throw new UploadError("Images must be 5MB or smaller.");
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
+  const filename = `listings/${randomUUID()}.${ext}`;
+  const blob = await put(filename, file, {
+    access: "public",
+    contentType: file.type,
+  });
 
-  const filename = `${randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(UPLOAD_DIR, filename), buffer);
-
-  return `/uploads/listings/${filename}`;
+  return blob.url;
 }
 
 export async function saveUploadedImages(files: File[]): Promise<string[]> {

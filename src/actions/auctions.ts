@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth-helpers";
 import { placeBid, buyNowAuction } from "@/lib/auctions";
 import { bidSchema } from "@/lib/validation";
+import { checkBidRateLimit } from "@/lib/rate-limit";
 
 export type BidFormState = {
   error?: string;
@@ -17,6 +18,11 @@ export async function placeBidAction(
   formData: FormData
 ): Promise<BidFormState> {
   const user = await requireUser();
+
+  const limited = await checkBidRateLimit(user.id);
+  if (limited) {
+    return { error: limited };
+  }
 
   const parsed = bidSchema.safeParse({
     auctionId: formData.get("auctionId"),
