@@ -1,69 +1,147 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Gavel, ShieldCheck, Store, Truck } from "lucide-react";
+import { getSessionUser } from "@/lib/auth-helpers";
+import { getWatchingSet } from "@/lib/cart";
+import { getFeaturedListings, getTrendingListings, getEndingSoonAuctions } from "@/lib/listings";
+import { finalizeExpiredAuctions, promoteUpcomingAuctions } from "@/lib/auctions";
+import { CATEGORY_TREE } from "@/lib/categories-data";
+import { ICON_MAP } from "@/lib/icon-map";
+import ProductRow from "@/components/ProductRow";
+import RecentlyViewed from "@/components/RecentlyViewed";
 
-export default function Home() {
+export default async function HomePage() {
+  await promoteUpcomingAuctions();
+  await finalizeExpiredAuctions();
+
+  const user = await getSessionUser();
+  const [trending, featured, endingSoon] = await Promise.all([
+    getTrendingListings(),
+    getFeaturedListings(),
+    getEndingSoonAuctions(),
+  ]);
+
+  const allIds = [...trending, ...featured, ...endingSoon].map((l) => l.id);
+  const watchingIds = await getWatchingSet(user?.id, allIds);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div className="container-page flex flex-col gap-12 py-8">
+      {/* Hero */}
+      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-brand via-brand to-brand-dark px-6 py-12 text-white sm:px-12 sm:py-16">
+        <div className="max-w-xl">
+          <span className="badge bg-white/15 text-white">Marketplace demo</span>
+          <h1 className="mt-4 text-3xl font-extrabold leading-tight sm:text-4xl">
+            Buy it, sell it, bid on it.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-3 text-base text-white/85">
+            Thousands of deals across electronics, fashion, home, auto, collectibles, and sports — plus live
+            auctions ending every day.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/search" className="btn bg-white text-brand hover:bg-white/90">
+              Shop all deals <ArrowRight size={16} />
+            </Link>
+            <Link href="/search?listingType=AUCTION&sort=ending-soon" className="btn border border-white/40 bg-white/10 text-white hover:bg-white/20">
+              <Gavel size={16} /> Live auctions
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust strip */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <TrustCard icon={<ShieldCheck size={20} />} title="Buyer protection" body="Secure checkout and verified purchase reviews." />
+        <TrustCard icon={<Truck size={20} />} title="Tracked shipping" body="Every order includes shipping costs and delivery estimates up front." />
+        <TrustCard icon={<Gavel size={20} />} title="Live bidding" body="Server-validated auctions with real-time countdowns." />
+      </section>
+
+      {/* Popular categories */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-foreground">Popular categories</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {CATEGORY_TREE.map((cat) => {
+            const Icon = ICON_MAP[cat.icon] ?? Store;
+            return (
+              <Link
+                key={cat.slug}
+                href={`/search?category=${cat.slug}`}
+                className="card flex flex-col items-center gap-2 p-5 text-center transition hover:border-brand hover:shadow-sm"
+              >
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand">
+                  <Icon size={20} />
+                </span>
+                <span className="text-sm font-medium text-foreground">{cat.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Featured auctions */}
+      {endingSoon.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+              <Gavel size={18} className="text-brand" /> Featured auctions — ending soon
+            </h2>
+            <Link href="/search?listingType=AUCTION&sort=ending-soon" className="text-sm font-medium text-brand hover:underline">
+              See all
+            </Link>
+          </div>
+          <ProductRow listings={endingSoon} watchingIds={watchingIds} />
+        </section>
+      )}
+
+      {/* Trending */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-foreground">Trending now</h2>
+          <Link href="/search?sort=newest" className="text-sm font-medium text-brand hover:underline">
+            See all
+          </Link>
+        </div>
+        <ProductRow listings={trending} watchingIds={watchingIds} />
+      </section>
+
+      {/* Recommended / featured */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-foreground">Recommended for you</h2>
+          <Link href="/search?sort=popularity" className="text-sm font-medium text-brand hover:underline">
+            See all
+          </Link>
+        </div>
+        <ProductRow listings={featured} watchingIds={watchingIds} />
+      </section>
+
+      {/* Recently viewed */}
+      <RecentlyViewed />
+
+      {/* Start selling CTA */}
+      <section className="card flex flex-col items-center gap-4 p-10 text-center sm:flex-row sm:justify-between sm:text-left">
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Have something to sell?</h2>
+          <p className="mt-1 text-sm text-muted">
+            List it in minutes — fixed price or auction. Reach buyers browsing every category.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <Link href="/sell" className="btn btn-primary shrink-0">
+          Start selling <ArrowRight size={16} />
+        </Link>
+      </section>
+    </div>
+  );
+}
+
+function TrustCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+  return (
+    <div className="card flex items-start gap-3 p-4">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">{icon}</span>
+      <div>
+        <div className="text-sm font-semibold text-foreground">{title}</div>
+        <div className="text-xs text-muted">{body}</div>
+      </div>
     </div>
   );
 }

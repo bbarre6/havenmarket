@@ -1,0 +1,348 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Condition {
+  NEW
+  USED_LIKE_NEW
+  USED_GOOD
+  USED_FAIR
+  FOR_PARTS
+}
+
+enum ListingType {
+  FIXED_PRICE
+  AUCTION
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  SOLD
+  ENDED
+  DELETED
+}
+
+enum AuctionStatus {
+  UPCOMING
+  LIVE
+  ENDED
+  SOLD
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  SIMULATED_PENDING
+  SIMULATED_PAID
+  SIMULATED_FAILED
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  DISMISSED
+  ACTIONED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  image         String?
+  bio           String?
+  isSeller      Boolean  @default(false)
+  storeName     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  addresses     Address[]
+  listings      Listing[]      @relation("SellerListings")
+  cartItems     CartItem[]
+  orders        Order[]        @relation("BuyerOrders")
+  bids          Bid[]
+  watchlist     Watchlist[]
+  sentMessages  Message[]      @relation("SentMessages")
+  receivedMessages Message[]   @relation("ReceivedMessages")
+  reviewsWritten Review[]      @relation("ReviewsWritten")
+  reviewsReceived Review[]     @relation("ReviewsReceived")
+  questionsAsked Question[]    @relation("QuestionsAsked")
+  reportsFiled  Report[]       @relation("ReportsFiled")
+  wonAuctions   Auction[]      @relation("AuctionWinner")
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  fullName   String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  postalCode String
+  country    String   @default("US")
+  phone      String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+}
+
+model Category {
+  id       String     @id @default(cuid())
+  name     String
+  slug     String     @unique
+  icon     String?
+  parentId String?
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children Category[] @relation("CategoryTree")
+  listings Listing[]
+
+  @@index([parentId])
+}
+
+model Listing {
+  id                  String        @id @default(cuid())
+  sellerId            String
+  categoryId          String
+  title               String
+  slug                String        @unique
+  description         String
+  condition           Condition
+  listingType         ListingType
+  price               Float
+  quantity            Int           @default(1)
+  quantityAvailable   Int           @default(1)
+  brand               String?
+  location             String       @default("United States")
+  shippingCost        Float         @default(0)
+  freeShipping        Boolean       @default(false)
+  shippingEstimateDays Int          @default(5)
+  status              ListingStatus @default(ACTIVE)
+  views               Int           @default(0)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  seller   User            @relation("SellerListings", fields: [sellerId], references: [id], onDelete: Cascade)
+  category Category        @relation(fields: [categoryId], references: [id])
+  images   ListingImage[]
+  auction  Auction?
+  cartItems CartItem[]
+  orderItems OrderItem[]
+  watchlist  Watchlist[]
+  questions  Question[]
+  reviews    Review[]
+  reports    Report[]
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([listingType])
+}
+
+model ListingImage {
+  id        String  @id @default(cuid())
+  listingId String
+  url       String
+  position  Int     @default(0)
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model Auction {
+  id             String        @id @default(cuid())
+  listingId      String        @unique
+  startingBid    Float
+  currentBid     Float
+  bidIncrement   Float         @default(1)
+  buyNowPrice    Float?
+  startAt        DateTime
+  endAt          DateTime
+  status         AuctionStatus @default(UPCOMING)
+  winnerId       String?
+  finalizedAt    DateTime?
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  winner  User?   @relation("AuctionWinner", fields: [winnerId], references: [id])
+  bids    Bid[]
+
+  @@index([status])
+  @@index([endAt])
+}
+
+model Bid {
+  id        String   @id @default(cuid())
+  auctionId String
+  bidderId  String
+  amount    Float
+  createdAt DateTime @default(now())
+
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder  User    @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+
+  @@index([auctionId])
+  @@index([bidderId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  listingId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+}
+
+model Order {
+  id             String        @id @default(cuid())
+  buyerId        String
+  addressId      String
+  status         OrderStatus   @default(PENDING_PAYMENT)
+  subtotal       Float
+  shippingTotal  Float
+  taxTotal       Float
+  total          Float
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  buyer   User        @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade)
+  address Address     @relation(fields: [addressId], references: [id])
+  items   OrderItem[]
+  payment Payment?
+
+  @@index([buyerId])
+  @@index([status])
+}
+
+model OrderItem {
+  id           String   @id @default(cuid())
+  orderId      String
+  listingId    String
+  sellerId     String
+  titleSnapshot String
+  price        Float
+  quantity     Int
+  shippingCost Float
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id])
+
+  @@index([orderId])
+  @@index([listingId])
+  @@index([sellerId])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  orderId         String        @unique
+  provider        String        @default("SIMULATED")
+  amountCents     Int
+  status          PaymentStatus @default(SIMULATED_PENDING)
+  stripePaymentIntentId String?
+  createdAt       DateTime      @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  listingId  String?
+  senderId   String
+  receiverId String
+  body       String
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  sender   User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([listingId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  listingId String
+  orderId   String
+  reviewerId String
+  sellerId  String
+  rating    Int
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+
+  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reviewer User    @relation("ReviewsWritten", fields: [reviewerId], references: [id], onDelete: Cascade)
+  seller   User    @relation("ReviewsReceived", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, listingId])
+  @@index([sellerId])
+  @@index([listingId])
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+}
+
+model Question {
+  id         String    @id @default(cuid())
+  listingId  String
+  askerId    String
+  question   String
+  answer     String?
+  answeredAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  asker   User    @relation("QuestionsAsked", fields: [askerId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model Report {
+  id         String       @id @default(cuid())
+  listingId  String
+  reporterId String
+  reason     String
+  details    String?
+  status     ReportStatus @default(OPEN)
+  createdAt  DateTime     @default(now())
+
+  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reporter User    @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([status])
+}
