@@ -66,7 +66,7 @@ export default function AccountMenu({ user }: Props) {
             <Store size={15} /> Seller dashboard
           </Link>
           {user.isAdmin && (
-            <Link href="/admin/reports" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-muted" onClick={() => setOpen(false)}>
+            <Link href="/admin/stats" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-muted" onClick={() => setOpen(false)}>
               <ShieldAlert size={15} /> Admin
             </Link>
           )}

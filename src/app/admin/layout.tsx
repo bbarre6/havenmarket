@@ -1,13 +1,16 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ShieldAlert, Flag } from "lucide-react";
+import { ShieldAlert, Flag, BarChart3 } from "lucide-react";
 import { getSessionUser } from "@/lib/auth-helpers";
 
-const NAV = [{ href: "/admin/reports", label: "Reports", icon: Flag }];
+const NAV = [
+  { href: "/admin/stats", label: "Stats", icon: BarChart3 },
+  { href: "/admin/reports", label: "Reports", icon: Flag },
+];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
-  if (!user) redirect("/login?callbackUrl=/admin/reports");
+  if (!user) redirect("/login?callbackUrl=/admin/stats");
   if (!user.isAdmin) redirect("/");
 
   return (
