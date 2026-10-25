@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Gavel, ShieldCheck, Store, Truck } from "lucide-react";
+import { ArrowRight, Gavel, PackagePlus, ShieldCheck, Store, Truck } from "lucide-react";
 import { getSessionUser } from "@/lib/auth-helpers";
 import { getWatchingSet } from "@/lib/cart";
 import { getFeaturedListings, getTrendingListings, getEndingSoonAuctions } from "@/lib/listings";
@@ -66,7 +66,7 @@ export default async function HomePage() {
               <Link
                 key={cat.slug}
                 href={`/search?category=${cat.slug}`}
-                className="card flex flex-col items-center gap-2 p-5 text-center transition hover:border-brand hover:shadow-sm"
+                className="card flex flex-col items-center gap-2 p-5 text-center hover:-translate-y-0.5 hover:border-brand hover:shadow-md"
               >
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand">
                   <Icon size={20} />
@@ -94,26 +94,46 @@ export default async function HomePage() {
       )}
 
       {/* Trending */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-foreground">Trending now</h2>
-          <Link href="/search?sort=newest" className="text-sm font-medium text-brand hover:underline">
-            See all
-          </Link>
-        </div>
-        <ProductRow listings={trending} watchingIds={watchingIds} />
-      </section>
+      {trending.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-foreground">Trending now</h2>
+            <Link href="/search?sort=newest" className="text-sm font-medium text-brand hover:underline">
+              See all
+            </Link>
+          </div>
+          <ProductRow listings={trending} watchingIds={watchingIds} />
+        </section>
+      )}
 
       {/* Recommended / featured */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-foreground">Recommended for you</h2>
-          <Link href="/search?sort=popularity" className="text-sm font-medium text-brand hover:underline">
-            See all
+      {featured.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-foreground">Recommended for you</h2>
+            <Link href="/search?sort=popularity" className="text-sm font-medium text-brand hover:underline">
+              See all
+            </Link>
+          </div>
+          <ProductRow listings={featured} watchingIds={watchingIds} />
+        </section>
+      )}
+
+      {/* Empty marketplace state */}
+      {trending.length === 0 && featured.length === 0 && endingSoon.length === 0 && (
+        <section className="card flex flex-col items-center gap-3 px-6 py-16 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand">
+            <PackagePlus size={26} />
+          </span>
+          <h2 className="text-lg font-bold text-foreground">No listings yet</h2>
+          <p className="max-w-sm text-sm text-muted">
+            This marketplace is brand new — once sellers start listing items, they&apos;ll show up here.
+          </p>
+          <Link href="/sell" className="btn btn-primary mt-2">
+            List the first item <ArrowRight size={16} />
           </Link>
-        </div>
-        <ProductRow listings={featured} watchingIds={watchingIds} />
-      </section>
+        </section>
+      )}
 
       {/* Recently viewed */}
       <RecentlyViewed />

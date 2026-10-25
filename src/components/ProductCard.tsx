@@ -12,7 +12,7 @@ export default function ProductCard({ listing, isWatching }: { listing: ListingC
   const isAuction = listing.listingType === "AUCTION" && listing.auction;
 
   return (
-    <div className="card group relative flex flex-col overflow-hidden transition hover:shadow-md">
+    <div className="card group relative flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg">
       <WatchlistButton listingId={listing.id} initialWatching={Boolean(isWatching)} className="absolute right-2 top-2 z-10" />
       <Link href={`/product/${listing.slug}`} className="block">
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-muted">
